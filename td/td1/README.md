@@ -27,4 +27,4 @@ Le TD servira de fil rouge pour introduire progressivement les concepts de la PO
 >
 > Si, plus loin dans le TD, un changement casse le code d'un exercice précédent, vous pouvez simplement le mettre en commentaires avec `/* ... */`.
 
-Utilisez la barre de navigation à gauche pour naviguer dans le TD, en commençant par `p1.md`.
+Utilisez la barre de navigation à gauche pour naviguer dans le TD, en commençant par `p01.md`.
