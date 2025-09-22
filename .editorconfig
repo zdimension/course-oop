@@ -1,0 +1,9 @@
+root = true
+[*.cs]
+indent_style = space
+indent_size = 4
+resharper_arrange_this_qualifier_highlighting = none
+resharper_member_can_be_protected_global_highlighting = none
+resharper_member_can_be_protected_local_highlighting = none
+resharper_check_namespace_highlighting = none
+dotnet_diagnostic.CA1050.severity = none
