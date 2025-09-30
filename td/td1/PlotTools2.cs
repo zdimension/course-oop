@@ -23,7 +23,7 @@ public class PlotTools
 
         var pm = new PlotModel
         {
-            Title = title,
+            Title = $"{title} ({filter})",
             Axes =
             {
                 new OxyPlot.Axes.LogarithmicAxis
