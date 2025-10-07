@@ -7,13 +7,20 @@ void DisplayComponent(Dipole d, double i)
     Console.WriteLine($"{d}, U={d.GetResistance() * i} V");
 }
 
-Resistance R1 = new Resistance("R1", 1e3);
-Resistance R2 = new Resistance("R2", 2e3);
-Series S1 = new Series("S1", R1, R2);
-DisplayComponent(S1, 2e-3); // affiche "Ser(S1, Res(R1, 1000 Ω), Res(R2, 2000 Ω)), U=6 V"
+Resistance R1 = new Resistance("R1", 100);
+Resistance R2 = new Resistance("R2", 1000);
+Resistance R3 = new Resistance("R3", 700);
+Parallel P1 = new Parallel("P1", [R1, R2, R3]);
 
-Parallel P1 = new Parallel("P1", R1, R2);
-DisplayComponent(P1, 2e-3); // affiche "Par(P1, Res(R1, 1000 Ω), Res(R2, 2000 Ω)), U=1,3333333333333333 V"
+Resistance R4 = new Resistance("R4", 800);
+Resistance R5 = new Resistance("R5", 1200);
+Parallel P2 = new Parallel("P2", [R4, R5]);
+
+Resistance R6 = new Resistance("R6", 1100);
+
+Series S1 = new Series("S1", [P1, P2, R6]);
+
+DisplayComponent(S1, 200e-3); // affiche "Ser(S1, Par(P1, Res(R1, 1000 Ω), Res(R2, 2000 Ω), Res(R3, 3000 Ω)), Par(P2, Res(R4, 800 Ω), Res(R5, 1200 Ω)), Res(R6, 1100 Ω)), U=332 V"
 
 public abstract class Dipole
 {
