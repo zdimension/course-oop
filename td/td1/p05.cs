@@ -77,44 +77,52 @@ public class Capacitor : Dipole
 
 public class Series : Dipole
 {
-    private Dipole d1, d2;
+    private Dipole[] dipoles;
 
-    public Series(string nom, Dipole d1, Dipole d2)
+    public Series(string nom, Dipole[] dipoles)
     {
         this.nom = nom;
-        this.d1 = d1;
-        this.d2 = d2;
+        this.dipoles = dipoles;
     }
 
     public override double GetResistance()
     {
-        return d1.GetResistance() + d2.GetResistance();
+        double resistance = 0;
+        foreach (Dipole d in dipoles)
+        {
+            resistance += d.GetResistance();
+        }
+        return resistance;
     }
 
     public override string ToString()
     {
-        return $"Ser({d1}, {d2})";
+        return $"Ser({nom}, {string.Join(", ", (object[])dipoles)})";
     }
 }
 
 public class Parallel : Dipole
 {
-    private Dipole d1, d2;
+    private Dipole[] dipoles;
 
-    public Parallel(string nom, Dipole d1, Dipole d2)
+    public Parallel(string nom, Dipole[] dipoles)
     {
         this.nom = nom;
-        this.d1 = d1;
-        this.d2 = d2;
+        this.dipoles = dipoles;
     }
 
     public override double GetResistance()
     {
-        return 1 / (1 / d1.GetResistance() + 1 / d2.GetResistance());
+        double inverseResistance = 0;
+        foreach (Dipole d in this.dipoles)
+        {
+            inverseResistance += 1 / d.GetResistance();
+        }
+        return 1 / inverseResistance;
     }
 
     public override string ToString()
     {
-        return $"Par({d1}, {d2})";
+        return $"Par({this.nom}, {string.Join(", ", (object[])this.dipoles)})";
     }
 }

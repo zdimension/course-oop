@@ -88,12 +88,12 @@ public class Series : Dipole
 
     public override double GetResistance()
     {
-        return d1.GetResistance() + d2.GetResistance();
+        return this.d1.GetResistance() + this.d2.GetResistance();
     }
 
     public override string ToString()
     {
-        return $"Ser({d1}, {d2})";
+        return $"Ser({nom}, {this.d1}, {this.d2})";
     }
 }
 
@@ -110,11 +110,11 @@ public class Parallel : Dipole
 
     public override double GetResistance()
     {
-        return 1 / (1 / d1.GetResistance() + 1 / d2.GetResistance());
+        return 1 / (1 / this.d1.GetResistance() + 1 / this.d2.GetResistance());
     }
 
     public override string ToString()
     {
-        return $"Par({d1}, {d2})";
+        return $"Par({this.nom}, {this.d1}, {this.d2})";
     }
 }
