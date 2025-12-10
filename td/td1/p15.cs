@@ -4,37 +4,14 @@ using System.Numerics;
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 // ---
 
-RCFilter filter4560 = RCFilter.CreateForCutoffFrequency(4560, 330e-9, RCFilterKind.Lowpass);
-Console.WriteLine(filter4560); // affiche par exemple LowpassRC(R=105,7648478813765 Ω, C=3,3E-07 F, f0=4560 Hz)
-
-RCFilter filter7000 = RCFilter.CreateForCutoffFrequency(7000, 470e-9, RCFilterKind.Highpass);
-Console.WriteLine(filter7000); // affiche par exemple HighpassRC(R=48,3096153846154 Ω, C=4,7E-07 F, f0=7000 Hz)
-
-try {
-    while (true) {
-        string nom = Console.ReadLine();
-        string valeur_string = Console.ReadLine();
-        try {
-            double valeur = double.Parse(valeur_string);
-            Resistance r = new Resistance(nom, valeur);
-            Console.WriteLine(r);
-            break;
-        }
-        catch (FormatException e)
-        {
-            Console.WriteLine($"{valeur_string} n'est pas un nombre valide !");
-        }
-        catch (ArgumentException e)
-        {
-            Console.WriteLine($"{nom} invalide !");
-        }
-    }
-}
-catch (Exception e)
 {
-    Console.WriteLine("Une erreur inconnue s'est produite");
+    Resistance R = new Resistance("R1", 910);
+    Capacitor C = new Capacitor("C1", 100e-9);
+    Inductor L = new Inductor("L1", 10e-3);
+    Parallel pc = new Parallel("PC1", new Dipole[] { R, C });
+    Divider divider = new Divider("Div1", L, pc);
+    PlotTools.MakePlot("Filtre RLC", "rlc_lowpass_par_2.png", divider);
 }
-
 
 public abstract class Dipole
 {
@@ -221,29 +198,32 @@ public class Parallel : Dipole
     }
 }
 
-public abstract class Filter
-{
-    public abstract Complex H(double fHz);
-    public abstract double[] GetCharacteristicFrequencies();
-}
-
 public enum RCFilterKind
 {
     Lowpass,
     Highpass
 }
 
-public class RCFilter : Filter
+public class RCFilter : IFilter
 {
     private Resistance R;
     private Capacitor C;
     private RCFilterKind kind;
+    private Divider divider;
 
     public RCFilter(double R_ohms, double C_farads, RCFilterKind kind)
     {
         this.R = new Resistance("R", R_ohms);
         this.C = new Capacitor("C", C_farads);
         this.kind = kind;
+        if (kind == RCFilterKind.Lowpass)
+        {
+            this.divider = new Divider("RC Divider", R, C);
+        }
+        else
+        {
+            this.divider = new Divider("RC Divider", C, R);
+        }
     }
 
     public static RCFilter CreateForCutoffFrequency(double fHz, double cF, RCFilterKind kind)
@@ -264,23 +244,7 @@ public class RCFilter : Filter
 
     public override Complex H(double fHz)
     {
-        Complex Z_R = R.GetImpedance(fHz);
-        Complex Z_C = C.GetImpedance(fHz);
-        // if (kind == RCFilterKind.Lowpass)
-        // {
-        //     return Z_C / (Z_R + Z_C);
-        // } 
-        // else
-        // {
-        //     return Z_R + (Z_R + Z_C);
-        // }
-
-        return kind switch
-        {
-            RCFilterKind.Lowpass => Z_C / (Z_R + Z_C),
-            RCFilterKind.Highpass => Z_R / (Z_R + Z_C),
-            _ => throw new ArgumentException("Valeur incorrecte")
-        };
+        return divider.H(fHz);
     }
 
     public override string ToString()
@@ -297,12 +261,13 @@ public enum RLCFilterKind
     Bandcut
 }
 
-public class RLCFilter : Filter
+public class RLCFilter : IFilter
 {
     private Resistance R;
     private Capacitor C;
     private Inductor L;
     private RLCFilterKind kind;
+    private Divider divider;
 
     public RLCFilter(double R_ohms, double C_farads, double L_henrys, RLCFilterKind kind)
     {
@@ -310,6 +275,26 @@ public class RLCFilter : Filter
         this.C = new Capacitor("C", C_farads);
         this.L = new Inductor("L", L_henrys);
         this.kind = kind;
+        if (kind == RLCFilterKind.Lowpass)
+        {
+            this.divider = new Divider("RLC Divider", 
+                new Series("Series", new Dipole[] { R, L }), C);
+        }
+        else if (kind == RLCFilterKind.Highpass)
+        {
+            this.divider = new Divider("RLC Divider", 
+                new Series("Series", new Dipole[] { R, C }), L);
+        }
+        else if (kind == RLCFilterKind.Bandpass)
+        {
+            this.divider = new Divider("RLC Divider", 
+                new Series("Series", new Dipole[] { L, C }), R);
+        }
+        else if (kind == RLCFilterKind.Bandcut)
+        {
+            this.divider = new Divider("RLC Divider", R, 
+                new Series("Series", new Dipole[] { L, C }));
+        }
     }
 
     public override double[] GetCharacteristicFrequencies()
@@ -339,22 +324,56 @@ public class RLCFilter : Filter
 
     public override Complex H(double fHz)
     {
-        Complex Z_R = R.GetImpedance(fHz);
-        Complex Z_L = L.GetImpedance(fHz);
-        Complex Z_C = C.GetImpedance(fHz);
-
-        return kind switch
-        {
-            RLCFilterKind.Lowpass => Z_C / (Z_R + Z_L + Z_C),
-            RLCFilterKind.Highpass => Z_L / (Z_R + Z_L + Z_C),
-            RLCFilterKind.Bandpass => Z_R / (Z_R + Z_L + Z_C),
-            RLCFilterKind.Bandcut => (Z_L + Z_C) / (Z_R + Z_L + Z_C),
-            _ => throw new ArgumentException("Valeur incorrecte")
-        };
+        return divider.H(fHz);
     }
 
     public override string ToString()
     {
         return $"RLCFilter(R={R.GetResistance()} Ω, L={L.GetInductance()} H, C={C.GetCapacitance()} F, kind={kind})";
     }
+}
+
+public class Divider : Dipole, IFilter
+{
+    private Dipole d1;
+    private Dipole d2;
+
+    public Divider(string nom, Dipole d1, Dipole d2) : base(nom)
+    {
+        this.d1 = d1;
+        this.d2 = d2;
+    }
+
+    public override double GetResistance()
+    {
+        return d1.GetResistance() + d2.GetResistance();
+    }
+
+    public override Complex GetImpedance(double fHz)
+    {
+        return d1.GetImpedance(fHz) + d2.GetImpedance(fHz);
+    }
+
+    public override string ToString()
+    {
+        return $"Div({GetName()}, {d1}, {d2})";
+    }
+
+    public double[] GetCharacteristicFrequencies()
+    {
+        return [];
+    }
+
+    public Complex H(double fHz)
+    {
+        Complex Z1 = d1.GetImpedance(fHz);
+        Complex Z2 = d2.GetImpedance(fHz);
+        return Z2 / (Z1 + Z2);
+    }
+}
+
+public interface IFilter
+{
+    Complex H(double fHz);
+    double[] GetCharacteristicFrequencies();
 }

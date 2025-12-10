@@ -306,8 +306,8 @@ public class RLCFilter : Filter
             case RLCFilterKind.Bandcut:
                 return [
                     f0,
-                    f0 + R.GetResistance() / (2 * Math.PI * (R.GetResistance() * C.GetCapacitance())),
-                    f0 - R.GetResistance() / (2 * Math.PI * (R.GetResistance() * C.GetCapacitance())),
+                    f0 + 1 / (2 * Math.PI * (R.GetResistance() * C.GetCapacitance())),
+                    f0 - 1 / (2 * Math.PI * (R.GetResistance() * C.GetCapacitance())),
                 ];
             default:
                 throw new Exception("Invalid type");
