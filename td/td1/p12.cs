@@ -50,7 +50,7 @@ public class Resistance : Dipole
 
     public override string ToString()
     {
-        return $"Res({nom}, {valeur_ohms} Ω)";
+        return $"Res({GetName()}, {valeur_ohms} Ω)";
     }
 }
 
@@ -84,7 +84,7 @@ public class Capacitor : Dipole
 
     public override string ToString()
     {
-        return $"Cap({nom}, {valeur_farads} F)";
+        return $"Cap({GetName()}, {valeur_farads} F)";
     }
 }
 
@@ -118,7 +118,7 @@ public class Inductor : Dipole
 
     public override string ToString()
     {
-        return $"Ind({nom}, {valeur_henrys} H)";
+        return $"Ind({GetName()}, {valeur_henrys} H)";
     }
 }
 
@@ -154,7 +154,7 @@ public class Series : Dipole
 
     public override string ToString()
     {
-        return $"Ser({nom}, {string.Join(", ", (object[])dipoles)})";
+        return $"Ser({GetName()}, {string.Join(", ", (object[])dipoles)})";
     }
 }
 
@@ -190,8 +190,14 @@ public class Parallel : Dipole
 
     public override string ToString()
     {
-        return $"Par({this.nom}, {string.Join(", ", (object[])this.dipoles)})";
+        return $"Par({this.GetName()}, {string.Join(", ", (object[])this.dipoles)})";
     }
+}
+
+public abstract class Filter
+{
+    public abstract Complex H(double fHz);
+    public abstract double[] GetCharacteristicFrequencies();
 }
 
 public enum RCFilterKind
@@ -200,7 +206,7 @@ public enum RCFilterKind
     Highpass
 }
 
-public class RCFilter
+public class RCFilter : Filter
 {
     private Resistance R;
     private Capacitor C;
@@ -222,6 +228,11 @@ public class RCFilter
     public double GetCutoffFrequency()
     {
         return 1 / (2 * Math.PI * R.GetResistance() * C.GetCapacitance());
+    }
+
+    public override double[] GetCharacteristicFrequencies()
+    {
+        return [GetCutoffFrequency()];
     }
 
     public override Complex H(double fHz)
@@ -259,7 +270,7 @@ public enum RLCFilterKind
     Bandcut
 }
 
-public class RLCFilter
+public class RLCFilter : Filter
 {
     private Resistance R;
     private Capacitor C;
@@ -274,7 +285,7 @@ public class RLCFilter
         this.kind = kind;
     }
 
-    public double[] GetCharacteristicFrequencies()
+    public override double[] GetCharacteristicFrequencies()
     {   
         double f0 = 1 / (2 * Math.PI * Math.Sqrt(L.GetInductance() * C.GetCapacitance()));
         switch (this.kind)
@@ -307,8 +318,8 @@ public class RLCFilter
 
         return kind switch
         {
-            RCFilterKind.Lowpass => Z_C / (Z_R + Z_L + Z_C),
-            RCFilterKind.Highpass => Z_L / (Z_R + Z_L + Z_C),
+            RLCFilterKind.Lowpass => Z_C / (Z_R + Z_L + Z_C),
+            RLCFilterKind.Highpass => Z_L / (Z_R + Z_L + Z_C),
             RLCFilterKind.Bandpass => Z_R / (Z_R + Z_L + Z_C),
             RLCFilterKind.Bandcut => (Z_L + Z_C) / (Z_R + Z_L + Z_C),
             _ => throw new ArgumentException("Valeur incorrecte")
@@ -317,6 +328,6 @@ public class RLCFilter
 
     public override string ToString()
     {
-        return $"RLCFilter(R={R.GetResistance()} Ω, L={L.GetInductance()} H, C={C.GetCapacitance()} F, f0={GetCutoffFrequency()} Hz, kind={kind})";
+        return $"RLCFilter(R={R.GetResistance()} Ω, L={L.GetInductance()} H, C={C.GetCapacitance()} F, kind={kind})";
     }
 }
