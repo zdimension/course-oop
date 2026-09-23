@@ -1,0 +1,3 @@
+# Build products created by CMake/vcpkg inside student checkpoints.
+**/build/
+**/vcpkg_installed/
